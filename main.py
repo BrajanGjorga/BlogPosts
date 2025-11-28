@@ -28,6 +28,14 @@ login_manager.init_app(app)
 def load_user(user_id):
     return db.get_or_404(User,user_id)
 
+gravatar=Gravatar(app,
+                  size=100,
+                  default='retro',
+                  force_default=False,
+                  force_lower=False,
+                  use_ssl=False,
+                  base_url=None)
+
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
@@ -55,7 +63,6 @@ class BlogPost(db.Model):
     subtitle: Mapped[str] = mapped_column(String(250), nullable=False)
     date: Mapped[str] = mapped_column(String(250), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
-    author: Mapped[str] = mapped_column(String(250), nullable=False)
     img_url: Mapped[str] = mapped_column(String(250), nullable=False)
     author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.user_id"))
     # Create reference to the User object. The "posts" refers to the posts property in the User class.
@@ -70,11 +77,6 @@ class CommentTable(db.Model):
     post_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
     comment_author = relationship("User", back_populates="comments")
     post = relationship("BlogPost", back_populates="comments")
-
-
-
-
-
 
 
 
@@ -206,8 +208,9 @@ def edit_post(post_id):
 
 
 # TODO: Use a decorator so only an admin user can delete a post
-@admin_only
+
 @app.route("/delete/<int:post_id>")
+@admin_only
 def delete_post(post_id):
     post_to_delete = db.get_or_404(BlogPost, post_id)
     db.session.delete(post_to_delete)
